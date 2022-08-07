@@ -9,7 +9,7 @@ bool vis_check(int c, int si) {
     int y = c % 10;
     for (int i = 0; i < si; i++) {
         for (int j = 0; j < si; j++) {
-        	//범위 넘으면 false
+            //범위 넘으면 false
             if (x + i >= 10 || y + j >= 10) return false;
             //칸에 적힌 수가 0이거나, 이미 색종이가 붙어있다면 false
             if (!arr[x + i][y + j] || vis[x + i][y + j]) return false;
@@ -56,7 +56,7 @@ void dfs(int c, int cnt) {
         bool ret = vis_check(c, i);
         //붙일 수 있다면
         if (ret) {
-        	//색종이도 쓸 수 있다면 붙인다.
+            //색종이도 쓸 수 있다면 붙인다.
             if (ch[i] < 5) {
                 ch[i]++;
                 dfs(c + 1, cnt + 1);
