@@ -1,85 +1,78 @@
 #include<iostream>
+#include<vector>
 using namespace std;
 
-int ans = 987654321, ch[6], arr[11][11];
-bool vis[11][11];
+int ans;
+int dx[9] = { 0,-1,-1,0,1,1,1,0,-1 };
+int dy[9] = { 0,0,-1,-1,-1,0,1,1,1 };
 
-bool vis_check(int c, int si) {
-    int x = c / 10;
-    int y = c % 10;
-    for (int i = 0; i < si; i++) {
-        for (int j = 0; j < si; j++) {
-            //범위 넘으면 false
-            if (x + i >= 10 || y + j >= 10) return false;
-            //칸에 적힌 수가 0이거나, 이미 색종이가 붙어있다면 false
-            if (!arr[x + i][y + j] || vis[x + i][y + j]) return false;
-        }
-    }
-    //색종이를 붙였다고 표시한다. (vis 배열의 값을 1로)
-    for (int i = 0; i < si; i++) {
-        for (int j = 0; j < si; j++) {
-            vis[x+i][y+j] = 1;
-        }
-    }
-    return true;
-}
-
-//vis 배열의 값을 다시 false로 바꾸는 함수
-void vis_false(int c, int si) {
-    int x = c / 10;
-    int y = c % 10;
-    for (int i = 0; i < si; i++) {
-        for (int j = 0; j < si; j++) {
-            vis[x + i][y + j] = 0;
-        }
-    }
-}
-
-void dfs(int c, int cnt) {
-    if (cnt >= ans) return; //ans보다 cnt가 크면 더 확인할 필요 없으므로 return
-    //기저 조건
-    if (c == 100) {
-        ans = min(ans, cnt);
-        return;
-    }
-    
-    int x = c / 10;
-    int y = c % 10;
-    //칸에 적힌 수가 0이거나 이미 색종이가 붙어있으면 다음 칸 호출
-    if (!arr[x][y] || vis[x][y]) { 
-        dfs(c + 1, cnt);
-        return; 
-    }
-    //색종이를 붙여본다.
-    for (int i = 1; i <=5; i++) {
-    	//색종이를 붙일 수 있는지 확인
-        bool ret = vis_check(c, i);
-        //붙일 수 있다면
-        if (ret) {
-            //색종이도 쓸 수 있다면 붙인다.
-            if (ch[i] < 5) {
-                ch[i]++;
-                dfs(c + 1, cnt + 1);
-                ch[i]--;
+vector<vector<pair<int, int>>> move_fish(vector<vector<pair<int, int>>> v) {
+    for (int x = 1; x <= 16; x++) {
+        bool find = false;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (v[i][j].first == x) {
+                    find = true;
+                    int dir = v[i][j].second;
+                    for (int k = 0; k < 9; k++) {
+                        int nx = i + dx[(dir + k)%9];
+                        int ny = j + dy[(dir + k)%9];
+                        if (nx == i && ny == j) continue;
+                        if (nx < 0 || ny < 0 || nx >= 4 || ny >= 4) continue;
+                        if (v[nx][ny].first == 17) continue; //상어면 건너뛴다.
+                        //물고기들끼리 자리 바꿈
+                        v[i][j] = v[nx][ny];
+                        v[nx][ny] = { x, (dir + k) % 9 };
+                        break;
+                    }
+                }
+                if (find) break;
             }
-            //vis 배열의 값을 false로
-            vis_false(c, i);
+            if (find) break;
         }
-        //붙일 수 없다면 더 큰 크기의 색종이도 붙일 수 없으므로 break
-        else break;
+    }
+    return v;
+}
+
+void func(int x, int y, int sum, vector<vector<pair<int, int>>> v) {
+    int sh_dir = v[x][y].second;
+    sum += v[x][y].first;
+    v[x][y] = { 17, sh_dir };
+
+    v = move_fish(v);
+    
+    //상어가 먹을 물고기를 택한다.
+    v[x][y] = { 0,0 };
+    bool ch = false;
+    for (int i = 1; i <= 4; i++) {
+        int nx = x + dx[sh_dir] * i;
+        int ny = y + dy[sh_dir] * i;
+        if (nx < 0 || ny < 0 || nx >= 4 || ny >= 4) continue;
+        if (nx == x && ny == y) continue;
+        if (!v[nx][ny].first) continue;
+        ch = true;
+        func(nx, ny, sum, v);
+    }
+    //잡아먹을 물고기가 없으면
+    if (!ch) {
+        ans = max(ans, sum);
     }
 }
 
 int main(void) {
     ios::ios_base::sync_with_stdio(false); cin.tie(0);
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            cin >> arr[i][j];
+    vector<vector<pair<int,int>>> v;
+    for (int i = 0; i < 4; i++) {
+        vector<pair<int, int>> tmp;
+        for (int j = 0; j < 4; j++) {
+            int a, b;
+            cin >> a >> b;
+            tmp.push_back({ a,b });
         }
+        v.push_back(tmp);
     }
-    dfs(0, 0);
-    if (ans == 987654321) cout << "-1";
-    else cout << ans;
-          
+    func(0, 0, 0, v);
+    cout << ans;
+
     return 0;
 }
